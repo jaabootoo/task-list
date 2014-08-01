@@ -61,15 +61,25 @@ var DeletedItem = React.createClass({
 });
 
 
-
-var EmptyItem = React.createClass({
+var SaveLink = React.createClass({
 	render: function() {
-		var rowClass = 'active';
+		var taskList = this.props.tasks
+		var tasksJSON = '?' + JSON.stringify(taskList);
 		return (
-			<tr className={rowClass}>
-				<td className='col-md-12'>You have no {this.props.tasktype} tasks.</td>
-			</tr>
+			<div className='pull-right'><a href={tasksJSON}>Save or share this task list</a></div>
 		);
+	}
+});
+
+var ClearStorage = React.createClass({
+	render: function() {
+		return (
+			<div className='pull-right'><a href='' onClick={this.handleClear}>Clear existing list (no undo)</a></div>
+		);
+	},
+	handleClear: function(){
+		localStorage.removeItem('jb-taskList');
+		localStorage.removeItem('jb-currentId');
 	}
 });
 
@@ -102,6 +112,7 @@ var TodoList = React.createClass({
 		setTask.complete = !setTask.complete;
 		setTasks[taskIndex] = setTask;
 		this.setState({tasks:setTasks});
+		localStorage.setItem('jb-taskList', JSON.stringify(setTasks));
 	},
 	whenEdited: function(e,task) {
 		var taskIndex = this.props.tasks.indexOf(task);
@@ -110,6 +121,7 @@ var TodoList = React.createClass({
 		setTask.text = e.target.value;
 		setTasks[taskIndex] = setTask;
 		this.setState({tasks:setTasks});
+		localStorage.setItem('jb-taskList', JSON.stringify(setTasks));
 	},
 	whenDeleted: function(e,task) {
 		var taskIndex = this.props.tasks.indexOf(task);
@@ -118,13 +130,18 @@ var TodoList = React.createClass({
 		setTask.deleted = !setTask.deleted;
 		setTasks[taskIndex] = setTask;
 		this.setState({tasks:setTasks});
+		localStorage.setItem('jb-taskList', JSON.stringify(setTasks));
 	}
 });
 
 
 var TodoApp = React.createClass({
 	getInitialState: function() {
-		return {tasks: [], text: '', currentid: 1};
+		var existingTasks = JSON.parse(localStorage.getItem('jb-taskList'));
+		if (!existingTasks) existingTasks = [];
+		var existingId = JSON.parse(localStorage.getItem('jb-currentId'));
+		if (!existingId) existingId = 1;
+		return {tasks: existingTasks, text: '', currentid: existingId};
 	},
 
 	onChange: function(e) {
@@ -138,11 +155,14 @@ var TodoApp = React.createClass({
 		var nextTasks = this.state.tasks.concat([nextTask]);
 		var nextText = '';
 		this.setState({tasks: nextTasks, text: nextText, currentid: this.state.currentid+1});
+		localStorage.setItem('jb-taskList', JSON.stringify(nextTasks));
+		localStorage.setItem('jb-currentId', JSON.stringify(this.state.currentid+1));
 	},
 	render: function() {
 		return (
 			<div>
 				<h1>My Todo List</h1>
+				<ClearStorage />
 				<form onSubmit={this.handleSubmit}>
 					<div className='input-group col-lg-12'>
 						<label className='sr-only' htmlFor='taskInput'>New task</label>
