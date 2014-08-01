@@ -6,6 +6,7 @@ A simple task list application written in React.js.  The task list has the follo
 + Add new tasks one after another easily
 + Toggle a task's status
 + Edit an existing task at any time
-+ Toggle a task as deleted and undelete
++ Toggle a task as deleted and undelete.  
++ Deleted tasks are locked and cannot be edited or completed.
 + Tasks persist through session
 + Clear your task list and start new if you must!
