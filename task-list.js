@@ -60,17 +60,40 @@ var DeletedItem = React.createClass({
 	}
 });
 
+
+
+var EmptyItem = React.createClass({
+	render: function() {
+		var rowClass = 'active';
+		return (
+			<tr className={rowClass}>
+				<td className='col-md-12'>You have no {this.props.tasktype} tasks.</td>
+			</tr>
+		);
+	}
+});
+
 var TodoList = React.createClass({
 	render: function() {
 		that = this;
 		var todoItems = this.props.tasks.map(function(task){
-			return <TodoItem task={task} complete={that.whenCompleted} edit={that.whenEdited} delete={that.whenDeleted}/>
+			if (!task.deleted) return <TodoItem task={task} complete={that.whenCompleted} edit={that.whenEdited} delete={that.whenDeleted}/>
 		});
+
+		var deletedItems = this.props.tasks.map(function(task){
+			if (task.deleted) return <DeletedItem task={task} undelete={that.whenDeleted}/>
+		});
+
 		return (
-			<table className='table'>
-			<tbody>{todoItems}</tbody>
-			</table>)
-		;
+			<div>
+				<table className='table'>
+					<tbody>{todoItems}</tbody>
+				</table>
+				<table className='table'>
+					<tbody>{deletedItems}</tbody>
+				</table>
+			</div>
+		);
 	},
 	whenCompleted: function(e,task) {
 		var taskIndex = this.props.tasks.indexOf(task);
@@ -90,41 +113,18 @@ var TodoList = React.createClass({
 	},
 	whenDeleted: function(e,task) {
 		var taskIndex = this.props.tasks.indexOf(task);
-		var setTasks = this.props.tasks.splice(taskIndex,1);
+		var setTasks = this.props.tasks;
+		var setTask = task;
+		setTask.deleted = !setTask.deleted;
+		setTasks[taskIndex] = setTask;
 		this.setState({tasks:setTasks});
-
-		var setDeleted = this.props.deletedtasks.concat([task]);
-		this.setState({deletedtasks: setDeleted});
-		console.log(this.props.deletedtasks);
 	}
 });
 
-var DeletedTaskList = React.createClass({
-	render: function() {
-		that = this;
-		var deletedItems = this.props.deletedtasks.map(function(task){
-			return <DeletedItem task={task} undelete={that.whenUndeleted}/>
-		});
-		return (
-			<table className='table'>
-			<tbody>{deletedItems}</tbody>
-			</table>)
-		;
-	},
-	whenUndeleted: function(e,task) {
-		var deletedIndex = this.props.deletedtasks.indexOf(task);
-		var setDeleted = this.props.deletedtasks.splice(deletedIndex,1);
-		this.setState({deletedtasks:setTasks});
-
-		var setTasks = this.props.tasks.concat([task]);
-		this.setState({tasks: setTasks});
-	}
-
-});
 
 var TodoApp = React.createClass({
 	getInitialState: function() {
-		return {tasks: [], deletedtasks: [{"id":-1,"text":'This is a sample deleted.',"complete":false}], text: '', currentid: 1};
+		return {tasks: [], text: '', currentid: 1};
 	},
 
 	onChange: function(e) {
@@ -134,7 +134,7 @@ var TodoApp = React.createClass({
 	handleSubmit: function(e) {
 		e.preventDefault();
 		var currentId = this.state.currentid;
-		var nextTask = {"id":currentId,"text":this.state.text,"complete":false};
+		var nextTask = {"id":currentId,"text":this.state.text,"complete":false,"deleted":false};
 		var nextTasks = this.state.tasks.concat([nextTask]);
 		var nextText = '';
 		this.setState({tasks: nextTasks, text: nextText, currentid: this.state.currentid+1});
@@ -150,8 +150,7 @@ var TodoApp = React.createClass({
 						<span className='input-group-btn'><button type='submit' className='btn btn-default'>{'Add Task'}</button></span>
 					</div>
 				</form>
-				<TodoList tasks={this.state.tasks} deletedtasks={this.state.deletedtasks} />
-				<DeletedTaskList tasks={this.state.tasks} deletedtasks={this.state.deletedtasks} />
+				<TodoList tasks={this.state.tasks} />
 			</div>
 		);
 	}
