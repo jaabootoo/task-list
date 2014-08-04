@@ -40,7 +40,7 @@ var DeletedItem = React.createClass({
 		var completeClass = 'btn btn-default';
 		if (this.props.task.complete) completeClass += ' active';
 
-		var completeText = 'In Process';
+		var completeText = 'Removed';
 		if (this.props.task.complete) completeText = 'Complete';
 
 		return (
@@ -63,10 +63,10 @@ var DeletedItem = React.createClass({
 
 var SaveLink = React.createClass({
 	render: function() {
-		var taskList = this.props.tasks
-		var tasksJSON = '?' + JSON.stringify(taskList);
+		var taskList = JSON.stringify(this.props.tasks);
+		var tasksParameter = '?' + encodeURIComponent(taskList);
 		return (
-			<div className='pull-right'><a href={tasksJSON}>Save or share this task list</a></div>
+			<div className='pull-right'><a href={tasksParameter}>Share this task list</a></div>
 		);
 	}
 });
@@ -74,7 +74,7 @@ var SaveLink = React.createClass({
 var ClearStorage = React.createClass({
 	render: function() {
 		return (
-			<div className='pull-right'><a href='' onClick={this.handleClear}>Clear existing list (no undo)</a></div>
+			<div className='pull-right'><a href='?' onClick={this.handleClear}>Clear existing list (no undo)</a></div>
 		);
 	},
 	handleClear: function(){
@@ -96,6 +96,7 @@ var TodoList = React.createClass({
 
 		return (
 			<div>
+				<div className='input-group col-lg-12'><SaveLink tasks={this.props.tasks} /></div>
 				<table className='table'>
 					<tbody>{todoItems}</tbody>
 				</table>
@@ -137,10 +138,17 @@ var TodoList = React.createClass({
 
 var TodoApp = React.createClass({
 	getInitialState: function() {
-		var existingTasks = JSON.parse(localStorage.getItem('jb-taskList'));
-		if (!existingTasks) existingTasks = [];
-		var existingId = JSON.parse(localStorage.getItem('jb-currentId'));
-		if (!existingId) existingId = 1;
+		var queryString = location.search;
+		queryString = queryString.replace('?','');
+		if (queryString) {
+			var existingTasks = JSON.parse(decodeURIComponent(queryString));
+			var existingId = existingTasks[existingTasks.length-1].id;
+		} else {
+			var existingTasks = JSON.parse(localStorage.getItem('jb-taskList'));
+			if (!existingTasks) existingTasks = [];
+			var existingId = JSON.parse(localStorage.getItem('jb-currentId'));
+			if (!existingId) existingId = 1;
+		}
 		return {tasks: existingTasks, text: '', currentid: existingId};
 	},
 
@@ -162,7 +170,7 @@ var TodoApp = React.createClass({
 		return (
 			<div>
 				<h1>My Todo List</h1>
-				<ClearStorage />
+				<div className='input-group col-lg-12'><ClearStorage /></div>
 				<form onSubmit={this.handleSubmit}>
 					<div className='input-group col-lg-12'>
 						<label className='sr-only' htmlFor='taskInput'>New task</label>
@@ -170,6 +178,10 @@ var TodoApp = React.createClass({
 						<span className='input-group-btn'><button type='submit' className='btn btn-default'>{'Add Task'}</button></span>
 					</div>
 				</form>
+
+				<br />
+
+				<br />
 				<TodoList tasks={this.state.tasks} />
 			</div>
 		);
